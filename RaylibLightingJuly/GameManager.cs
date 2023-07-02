@@ -12,7 +12,7 @@ namespace RaylibLightingJuly
         public static float screenTileWidth = 120;
         public static float screenTileHeight = 67.5f;
 
-        private static float lightingUpdateDuration = 0.1f;
+        private static float lightingUpdateDuration = 0.0f;
         private static float lightingUpdateTimer = 0f;
 
         public static Camera2D mainCamera = new Camera2D()
@@ -43,7 +43,7 @@ namespace RaylibLightingJuly
             Raylib.InitWindow(world.mapWidth * WorldRenderer.pixelsPerTile * 2, world.mapHeight * WorldRenderer.pixelsPerTile, "Tile Lighting");
             WorldRenderer.Initialise();
             WorldGenerator.GeneratePerlinTiles(world, 0.38f);
-            WorldGenerator.AddTorches(world, 100);
+            WorldGenerator.AddTorches(world, 75);
             LightingManager.Initialise();
             previewTexture = Raylib.LoadRenderTexture((int)(screenTileWidth * WorldRenderer.pixelsPerTile), (int)(screenTileHeight * WorldRenderer.pixelsPerTile));
         }
@@ -95,6 +95,7 @@ namespace RaylibLightingJuly
                 new Rectangle(Raylib.GetScreenWidth() / 2, 0, Raylib.GetScreenWidth() / 2, Raylib.GetScreenHeight()),
                 Vector2.Zero, 0, Color.WHITE);
             Raylib.DrawFPS(10, 10);
+            Raylib.DrawText($"AvgLightProp: {DebugManager.GetAverageLightmapPropagations()}", 10, 40, 20, Color.DARKGREEN);
 
             Raylib.EndDrawing();
         }
@@ -102,6 +103,32 @@ namespace RaylibLightingJuly
         public static void End()
         {
             Raylib.CloseWindow();
+        }
+    }
+
+    static class DebugManager
+    {
+        private static int[] averageLightPropagations = new int[1];
+        private static int nextLightPropagationIndex = 0;
+
+        public static void RecordLightmapPropagations(int iterations)
+        {
+            averageLightPropagations[nextLightPropagationIndex] = iterations;
+            nextLightPropagationIndex++;
+            if (nextLightPropagationIndex == averageLightPropagations.Length)
+            {
+                nextLightPropagationIndex = 0;
+            }
+        }
+
+        public static float GetAverageLightmapPropagations()
+        {
+            int sum = 0;
+            for (int i = 0; i < averageLightPropagations.Length; i++)
+            {
+                sum += averageLightPropagations[i];
+            }
+            return (float)sum / averageLightPropagations.Length;
         }
     }
 }

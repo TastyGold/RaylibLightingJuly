@@ -2,12 +2,12 @@
 {
     static class LightingManager
     {
-        private static readonly float regionScreenPadding = 16;
+        private static readonly float regionScreenPadding = 20;
         public static int regionWidth;
         public static int regionHeight;
         
-        const int maxLightPropagations = 24;
-        const int lightFalloffAir = 10;
+        const int maxLightPropagations = 32;
+        const int lightFalloffAir = 8;
         const int lightFalloffTile = 40;
 
         public static LightLevel[,] lightmap;
@@ -24,7 +24,7 @@
             regionWidth = (int)(GameManager.screenTileWidth + (2 * regionScreenPadding));
             regionHeight = (int)(GameManager.screenTileHeight + (2 * regionScreenPadding));
             lightmap = new LightLevel[regionWidth, regionHeight];
-    }
+        }
 
         public static void CalculateLighting(World world, float cameraX, float cameraY)
         {
@@ -42,20 +42,32 @@
                 }
             }
 
-            for (int i = 0; i < maxLightPropagations; i++)
+            int i = 0;
+            bool changed = true;
+            while (i < maxLightPropagations && changed == true)
             {
-                PropagateLight(world, startX, startY, endX, endY);
+                changed = PropagateLight(world, startX, startY, endX, endY, i % 2 == 1, i / 2 % 2 == 1);
+                i++;
             }
+
+            DebugManager.RecordLightmapPropagations(i);
         }
 
         /// <returns>True if any change to the lightmap was made</returns>
-        private static bool PropagateLight(World world, int startX, int startY, int endX, int endY)
+        private static bool PropagateLight(World world, int startX, int startY, int endX, int endY, bool reverseScanX, bool reverseScanY)
         {
             bool changed = false;
-            for (int y = 0; y <= endY - startY; y++)
+            endX -= startX;
+            endY -= startY;
+
+            for (int iy = 0; iy <= endY; iy++)
             {
-                for (int x = 0; x <= endX - startX; x++)
+                for (int ix = 0; ix <= endX; ix++)
                 {
+                    //cool optimisation of lightmap generation by swapping direction of for loops
+                    int x = reverseScanX ? endX - ix : ix;
+                    int y = reverseScanY ? endY - iy : iy;
+
                     if (lightmap[x, y].CanPropagate)
                     {
                         for (int n = 0; n < neighbourOffsetX.Length; n++)
