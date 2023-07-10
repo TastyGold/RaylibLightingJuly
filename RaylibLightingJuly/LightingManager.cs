@@ -11,8 +11,8 @@ namespace RaylibLightingJuly
         public static int worldWidth;
         public static int worldHeight;
         
-        const int maxLightPropagations = 32;
-        const int lightFalloffAir = 8;
+        const int maxLightPropagations = 12;
+        const int lightFalloffAir = 6;
         const int lightFalloffTile = 40;
 
         public static LitRegionData litRegionData = new LitRegionData(0, 0);
@@ -152,39 +152,53 @@ namespace RaylibLightingJuly
 
                     if (target[x, y].CanPropagate)
                     {
-                        for (int n = 0; n < neighbourOffsetX.Length; n++)
+                        //New: AvgProp = 8, AvgCalcTime(Debug)=21.5ms (runs 70% faster)
+                        int nx = x + (reverseScanX ? -1 : 1);
+                        int ny = y + (reverseScanY ? -1 : 1);
+
+                        PropagateLightToNeighbour(target, startX, startY, x, y, nx, y, ref changed);
+                        PropagateLightToNeighbour(target, startX, startY, x, y, x, ny, ref changed);
+
+                        /*
+                        //Old: AvgProp = 8, AvgCalcTime(Debug)=37.0ms
+                        for (int i = 0; i < neighbourOffsetX.Length; i++)
                         {
-                            int nx = x + neighbourOffsetX[n];
-                            int ny = y + neighbourOffsetY[n];
-
-                            if (!(nx < 0 || nx >= regionWidth || ny < 0 || ny >= regionHeight || x + startX >= worldWidth || y + startY >= worldHeight))
-                            {
-                                int falloff = litRegionData.falloffMap[x, y];// world.fgTiles[x + startX, y + startY] == 0 ? lightFalloffAir : lightFalloffTile;
-                                int red = target[x, y].red - falloff;
-                                int green = target[x, y].green - falloff;
-                                int blue = target[x, y].blue - falloff;
-
-                                if (red > target[nx, ny].red)
-                                {
-                                    changed = true;
-                                    target[nx, ny].red = (byte)red;
-                                }
-                                if (green > target[nx, ny].green)
-                                {
-                                    changed = true;
-                                    target[nx, ny].green = (byte)green;
-                                }
-                                if (blue > target[nx, ny].blue)
-                                {
-                                    changed = true;
-                                    target[nx, ny].blue = (byte)blue;
-                                }
-                            }
+                            nx = x + neighbourOffsetX[i];
+                            ny = y + neighbourOffsetY[i];
+                            PropagateLightToNeighbour(target, startX, startY, x, y, nx, ny, ref changed);
                         }
+                        */
                     }
                 }
             }
             return changed;
+        }
+
+        private static void PropagateLightToNeighbour(LightLevel[,] target, int startX, int startY, int x, int y, int nx, int ny, ref bool changed)
+        {
+            if (!(nx < 0 || nx >= regionWidth || ny < 0 || ny >= regionHeight || x + startX >= worldWidth || y + startY >= worldHeight))
+            {
+                int falloff = litRegionData.falloffMap[x, y];
+                int red = target[x, y].red - falloff;
+                int green = target[x, y].green - falloff;
+                int blue = target[x, y].blue - falloff;
+
+                if (red > target[nx, ny].red)
+                {
+                    changed = true;
+                    target[nx, ny].red = (byte)red;
+                }
+                if (green > target[nx, ny].green)
+                {
+                    changed = true;
+                    target[nx, ny].green = (byte)green;
+                }
+                if (blue > target[nx, ny].blue)
+                {
+                    changed = true;
+                    target[nx, ny].blue = (byte)blue;
+                }
+            }
         }
     }
 }

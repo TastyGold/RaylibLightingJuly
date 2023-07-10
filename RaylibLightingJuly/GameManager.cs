@@ -6,7 +6,7 @@ namespace RaylibLightingJuly
     static class GameManager
     {
         //Game Data
-        public static World world;
+        public static World world = new World(0, 0);
 
         private static float mouseX, mouseY;
         public static float screenTileWidth = 120;
@@ -28,7 +28,7 @@ namespace RaylibLightingJuly
         {
             Begin();
 
-            while(!Raylib.WindowShouldClose())
+            while (!Raylib.WindowShouldClose())
             {
                 Update();
                 Draw();
@@ -43,7 +43,7 @@ namespace RaylibLightingJuly
             Raylib.InitWindow(world.mapWidth * WorldRenderer.pixelsPerTile * 2, world.mapHeight * WorldRenderer.pixelsPerTile, "Tile Lighting");
             WorldRenderer.Initialise();
             WorldGenerator.GeneratePerlinTiles(world, 0.38f);
-            WorldGenerator.AddTorches(world, 75);
+            WorldGenerator.AddTorches(world, 50);
             LightingManager.Initialise();
             LightingManager.worldWidth = world.mapWidth;
             LightingManager.worldHeight = world.mapHeight;
@@ -67,17 +67,20 @@ namespace RaylibLightingJuly
 
             mainCamera.target = new Vector2(Raylib.GetMouseX(), Raylib.GetMouseY());
 
-            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+            if (!(mouseX < 0 || mouseY < 0 || mouseX >= world.mapWidth || mouseY >= world.mapHeight))
             {
-                world.fgTiles[(int)mouseX, (int)mouseY] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
-                world.fgTiles[(int)mouseX + 1, (int)mouseY] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
-                world.fgTiles[(int)mouseX, (int)mouseY + 1] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
-                world.fgTiles[(int)mouseX - 1, (int)mouseY] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
-                world.fgTiles[(int)mouseX, (int)mouseY - 1] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
-            }
-            if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
-            {
-                world.fgTiles[(int)mouseX, (int)mouseY] = 0;
+                if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
+                {
+                    world.fgTiles[(int)mouseX, (int)mouseY] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
+                    //world.fgTiles[(int)mouseX + 1, (int)mouseY] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
+                    //world.fgTiles[(int)mouseX, (int)mouseY + 1] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
+                    //world.fgTiles[(int)mouseX - 1, (int)mouseY] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
+                    //world.fgTiles[(int)mouseX, (int)mouseY - 1] = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? (byte)2 : (byte)1;
+                }
+                if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_RIGHT))
+                {
+                    world.fgTiles[(int)mouseX, (int)mouseY] = 0;
+                }
             }
 
             float deltaTime = Raylib.GetFrameTime();
@@ -121,6 +124,7 @@ namespace RaylibLightingJuly
             Raylib.DrawFPS(10, 10);
             Raylib.DrawText($"AvgLightProp: {DebugManager.GetAverageLightmapPropagations()}", 10, 40, 20, Color.DARKGREEN);
             Raylib.DrawText($"LightingCalc (ms): {DebugManager.GetLightingCalculationTime()}", 10, 70, 20, Color.DARKGREEN);
+            Raylib.DrawText($"AvgLightingCalc (ms): {DebugManager.GetAverageLightingCalculationTime()}", 10, 100, 20, Color.DARKGREEN);
             DebugManager.DrawFrameTimeGraph(5000);
 
             Raylib.EndDrawing();
@@ -160,15 +164,34 @@ namespace RaylibLightingJuly
 
         //Lighting Calculation Time
         private static int lightingCalculationMilliseconds = 0;
+        private static int[] lightingCalculationMillisecondsRecord = new int[50];
+        private static int nextLCMRIndex = 0;
 
         public static void SetLightingCalculationTime(int milliseconds)
         {
             lightingCalculationMilliseconds = milliseconds;
+            lightingCalculationMillisecondsRecord[nextLCMRIndex] = milliseconds;
+            nextLCMRIndex++;
+            if (nextLCMRIndex >= lightingCalculationMillisecondsRecord.Length)
+            {
+                nextLCMRIndex -= lightingCalculationMillisecondsRecord.Length;
+            }
         }
 
         public static int GetLightingCalculationTime()
         {
             return lightingCalculationMilliseconds;
+        }
+
+        public static float GetAverageLightingCalculationTime()
+        {
+            int sum = 0;
+            for (int i = 0; i < lightingCalculationMillisecondsRecord.Length; i++)
+            {
+                sum += lightingCalculationMillisecondsRecord[i];
+            }
+            float average = (float)sum / lightingCalculationMillisecondsRecord.Length;
+            return average;
         }
 
         //Frame Time Graph
