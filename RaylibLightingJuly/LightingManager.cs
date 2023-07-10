@@ -4,23 +4,23 @@ namespace RaylibLightingJuly
 {
     static class LightingManager
     {
-        private static readonly float regionScreenPadding = 24;
+        private static readonly float regionScreenPadding = 32;
         public static int regionWidth;
         public static int regionHeight;
 
         public static int worldWidth;
         public static int worldHeight;
         
-        const int maxLightPropagations = 12;
-        const int lightFalloffAir = 6;
-        const int lightFalloffTile = 40;
+        public const int maxLightPropagations = 12;
+        public const int lightFalloffAir = 6;
+        public const int lightFalloffTile = 40;
 
         public static LitRegionData litRegionData = new LitRegionData(0, 0);
         private static LightLevel[,] tempLightmap = new LightLevel[0, 0];
         private static byte[,] tempTileIds = new byte[0, 0];
 
-        private static LightLevel[] tileIdLightLevels = new LightLevel[256];
-        private static int[] tileIdFalloffValues = new int[256];
+        private static readonly LightLevel[] tileIdLightLevels = new LightLevel[256];
+        private static readonly int[] tileIdFalloffValues = new int[256];
 
         private static int[] neighbourOffsetX = { 1, 0, -1, 0 };
         private static int[] neighbourOffsetY = { 0, -1, 0, 1 };
@@ -150,7 +150,7 @@ namespace RaylibLightingJuly
                     int x = reverseScanX ? endX - ix : ix;
                     int y = reverseScanY ? endY - iy : iy;
 
-                    if (target[x, y].CanPropagate)
+                    if (target[x, y].CanPropagate(litRegionData.falloffMap[x, y]))
                     {
                         //New: AvgProp = 8, AvgCalcTime(Debug)=21.5ms (runs 70% faster)
                         int nx = x + (reverseScanX ? -1 : 1);
@@ -168,6 +168,12 @@ namespace RaylibLightingJuly
                             PropagateLightToNeighbour(target, startX, startY, x, y, nx, ny, ref changed);
                         }
                         */
+
+                        //Hexagonal Tilemap Modification
+                        //if (reverseScanX == reverseScanY)
+                        //{
+                        //    PropagateLightToNeighbour(target, startX, startY, x, y, nx, ny, ref changed);
+                        //}
                     }
                 }
             }

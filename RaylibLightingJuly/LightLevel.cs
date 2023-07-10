@@ -5,10 +5,12 @@
         public byte red;
         public byte green;
         public byte blue;
-
-        public bool CanPropagate => red > 16 || green > 16 || blue > 16;
-
         public byte Magnitude => Math.Max(red, Math.Max(green, blue));
+
+        public bool CanPropagate(int falloff)
+        {
+            return red > falloff || green > falloff || blue > falloff;
+        }
 
         public void Set(byte red, byte green, byte blue)
         {
