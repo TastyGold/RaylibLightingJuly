@@ -99,7 +99,7 @@ namespace RaylibLightingJuly
             Raylib.EndTextureMode();
 
             Raylib.ClearBackground(Color.BLACK);
-            WorldRenderer.DrawTilesSimpleLit(world, false);
+            //WorldRenderer.DrawTilesSimpleLit(world, false);
             Raylib.DrawRectangleLines(
                 (int)((mouseX - (screenTileWidth / 2)) * WorldRenderer.pixelsPerTile),
                 (int)((mouseY - (screenTileHeight / 2)) * WorldRenderer.pixelsPerTile),

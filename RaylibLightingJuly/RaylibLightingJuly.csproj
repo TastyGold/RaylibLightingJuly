@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="raylib" Version="4.5.0" />
-    <PackageReference Include="Raylib-cs" Version="4.5.0.1" />
+    <PackageReference Include="Raylib-cs" Version="4.5.0.2" />
   </ItemGroup>
 
 </Project>

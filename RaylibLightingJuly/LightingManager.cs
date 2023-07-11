@@ -4,6 +4,8 @@ namespace RaylibLightingJuly
 {
     static class LightingManager
     {
+        public const float lightingInterval = 0.05f;
+
         private static readonly float regionScreenPadding = 32;
         public static int regionWidth;
         public static int regionHeight;
@@ -52,8 +54,6 @@ namespace RaylibLightingJuly
 
         public static void BeginThreadedLightingCalculation()
         {
-            const float interval = 0.05f;
-
             Stopwatch timer = new Stopwatch();
 
             while (Thread.CurrentThread.IsAlive)
@@ -62,7 +62,7 @@ namespace RaylibLightingJuly
                 CalculateLighting(GameManager.world, tempLightmap);
 
                 int timeTaken = (int)timer.ElapsedMilliseconds;
-                int timeRemaining = (int)(interval * 1000) - timeTaken;
+                int timeRemaining = (int)(lightingInterval * 1000) - timeTaken;
 
                 DebugManager.SetLightingCalculationTime(timeTaken);
 
@@ -108,6 +108,10 @@ namespace RaylibLightingJuly
                         litRegionData.falloffMap[x, y] = tileIdFalloffValues[tileId];
                     }
                 }
+                
+                //realtime lighting test
+                LightLevel l = target[regionWidth / 2, regionHeight / 2];
+                target[regionWidth / 2, regionHeight / 2].Set(new LightLevel(Math.Max((byte)100, l.red), Math.Max((byte)200, l.green), Math.Max((byte)255, l.blue)));
 
                 int i = 0;
                 bool changed = true;
@@ -152,37 +156,22 @@ namespace RaylibLightingJuly
 
                     if (target[x, y].CanPropagate(litRegionData.falloffMap[x, y]))
                     {
-                        //New: AvgProp = 8, AvgCalcTime(Debug)=21.5ms (runs 70% faster)
                         int nx = x + (reverseScanX ? -1 : 1);
                         int ny = y + (reverseScanY ? -1 : 1);
 
-                        PropagateLightToNeighbour(target, startX, startY, x, y, nx, y, ref changed);
-                        PropagateLightToNeighbour(target, startX, startY, x, y, x, ny, ref changed);
-
-                        /*
-                        //Old: AvgProp = 8, AvgCalcTime(Debug)=37.0ms
-                        for (int i = 0; i < neighbourOffsetX.Length; i++)
-                        {
-                            nx = x + neighbourOffsetX[i];
-                            ny = y + neighbourOffsetY[i];
-                            PropagateLightToNeighbour(target, startX, startY, x, y, nx, ny, ref changed);
-                        }
-                        */
-
-                        //Hexagonal Tilemap Modification
-                        //if (reverseScanX == reverseScanY)
-                        //{
-                        //    PropagateLightToNeighbour(target, startX, startY, x, y, nx, ny, ref changed);
-                        //}
+                        changed |= PropagateLightToNeighbour(target, x, y, nx, y);
+                        changed |= PropagateLightToNeighbour(target, x, y, x, ny);
                     }
                 }
             }
             return changed;
         }
 
-        private static void PropagateLightToNeighbour(LightLevel[,] target, int startX, int startY, int x, int y, int nx, int ny, ref bool changed)
+        /// <returns>True if any change to the lightmap was made</returns>
+        private static bool PropagateLightToNeighbour(LightLevel[,] target, int x, int y, int nx, int ny)
         {
-            if (!(nx < 0 || nx >= regionWidth || ny < 0 || ny >= regionHeight || x + startX >= worldWidth || y + startY >= worldHeight))
+            bool changed = false;
+            if (!(nx < 0 || nx >= regionWidth || ny < 0 || ny >= regionHeight))// || x + startX >= worldWidth || y + startY >= worldHeight))
             {
                 int falloff = litRegionData.falloffMap[x, y];
                 int red = target[x, y].red - falloff;
@@ -205,6 +194,7 @@ namespace RaylibLightingJuly
                     target[nx, ny].blue = (byte)blue;
                 }
             }
+            return changed;
         }
     }
 }
