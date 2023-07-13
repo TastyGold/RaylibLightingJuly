@@ -24,9 +24,6 @@ namespace RaylibLightingJuly
         private static readonly LightLevel[] tileIdLightLevels = new LightLevel[256];
         private static readonly int[] tileIdFalloffValues = new int[256];
 
-        private static int[] neighbourOffsetX = { 1, 0, -1, 0 };
-        private static int[] neighbourOffsetY = { 0, -1, 0, 1 };
-
         public static void Initialise()
         {
             tileIdLightLevels[2] = new LightLevel(222, 143, 255);
@@ -77,6 +74,7 @@ namespace RaylibLightingJuly
         {
             int startX, startY, endX, endY;
 
+            //Calculate Region Position
             lock (litRegionData)
             {
                 startX = Math.Max(0, (int)litRegionData.centerX - (regionWidth / 2));
@@ -86,6 +84,7 @@ namespace RaylibLightingJuly
             endX = Math.Min(worldWidth, startX + regionWidth) - 1;
             endY = Math.Min(worldHeight, startY + regionHeight) - 1;
 
+            //Get TileIDs
             lock (world)
             {
                 for (int y = startY; y <= endY; y++)
@@ -99,6 +98,7 @@ namespace RaylibLightingJuly
 
             lock (litRegionData.falloffMap)
             {
+                //Calculate base lightmap and falloff map
                 for (int y = 0; y <= endY - startY; y++)
                 {
                     for (int x = 0; x <= endX - startX; x++)
@@ -109,21 +109,19 @@ namespace RaylibLightingJuly
                     }
                 }
                 
-                //realtime lighting test
-                LightLevel l = target[regionWidth / 2, regionHeight / 2];
-                target[regionWidth / 2, regionHeight / 2].Set(new LightLevel(Math.Max((byte)100, l.red), Math.Max((byte)200, l.green), Math.Max((byte)255, l.blue)));
-
+                //Run lightmap propagations
                 int i = 0;
                 bool changed = true;
                 while (i < maxLightPropagations && changed == true)
                 {
-                    changed = PropagateLight(target, startX, startY, endX, endY, i % 2 == 1, i / 2 % 2 == 1);
+                    changed = PropagateLight(target, startX, startY, endX, endY, i % 2 == 1, i % 4 % 3 > 0);
                     i++;
                 }
 
                 DebugManager.RecordLightmapPropagations(i);
             }
 
+            //Upload calculated lightmap data to shared region data
             lock (litRegionData)
             {
                 litRegionData.startX = startX;
@@ -159,6 +157,7 @@ namespace RaylibLightingJuly
                         int nx = x + (reverseScanX ? -1 : 1);
                         int ny = y + (reverseScanY ? -1 : 1);
 
+                        //only attempts to propagate in the scan directions of X and Y
                         changed |= PropagateLightToNeighbour(target, x, y, nx, y);
                         changed |= PropagateLightToNeighbour(target, x, y, x, ny);
                     }
