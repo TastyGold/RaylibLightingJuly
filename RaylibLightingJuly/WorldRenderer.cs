@@ -82,6 +82,18 @@ namespace RaylibLightingJuly
             }
         }
 
+        public static void DrawWorldBorderLines(World world)
+        {
+            Color borderColor = Color.VIOLET;
+            int width = world.mapWidth * pixelsPerTile;
+            int height = world.mapHeight * pixelsPerTile;
+
+            Raylib.DrawLine(-1, -1, width + 1, -1, borderColor);
+            Raylib.DrawLine(0, -1, 0, height + 1, borderColor);
+            Raylib.DrawLine(0, height, width + 1, height, borderColor);
+            Raylib.DrawLine(width + 1, 0, width + 1, height, borderColor);
+        }
+
         public static Color Tint(Color col, LightLevel tint)
         {
             return new Color(

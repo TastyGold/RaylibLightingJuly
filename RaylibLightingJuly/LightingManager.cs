@@ -26,11 +26,11 @@ namespace RaylibLightingJuly
 
         private static int[,] falloffMap = new int[0, 0];
 
-        public static void Initialise()
+        public static void Initialise(float screenTileWidth, float screenTileHeight)
         {
             tileIdLightLevels[2] = new LightLevel(222, 143, 255);
-            regionWidth = (int)(GameManager.screenTileWidth + (2 * regionScreenPadding));
-            regionHeight = (int)(GameManager.screenTileHeight + (2 * regionScreenPadding));
+            regionWidth = (int)(screenTileWidth + (2 * regionScreenPadding));
+            regionHeight = (int)(screenTileHeight + (2 * regionScreenPadding));
             litRegionData = new LitRegionData(regionWidth, regionHeight);
             tempLightmap = new LightLevel[regionWidth, regionHeight];
             tempTileIds = new byte[regionWidth, regionHeight];
@@ -59,7 +59,10 @@ namespace RaylibLightingJuly
             while (Thread.CurrentThread.IsAlive)
             {
                 timer.Restart();
-                CalculateLighting(GameManager.world, tempLightmap);
+                if (litRegionData.targetWorld is not null)
+                {
+                    CalculateLighting(litRegionData.targetWorld, tempLightmap);
+                }
 
                 int timeTaken = (int)timer.ElapsedMilliseconds;
                 int timeRemaining = (int)(lightingInterval * 1000) - timeTaken;
