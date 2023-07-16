@@ -14,8 +14,8 @@ namespace RaylibLightingJuly
         public static int worldHeight;
         
         public const int maxLightPropagations = 12;
-        public const int lightFalloffAir = 6;
-        public const int lightFalloffTile = 40;
+        public const int lightFalloffAir = 8;
+        public const int lightFalloffTile = 32;
 
         public static LitRegionData litRegionData = new LitRegionData(0, 0);
         private static LightLevel[,] tempLightmap = new LightLevel[0, 0];
@@ -26,19 +26,24 @@ namespace RaylibLightingJuly
 
         private static int[,] falloffMap = new int[0, 0];
 
-        public static void Initialise(float screenTileWidth, float screenTileHeight)
+        public static List<PointLight> pointLights = new List<PointLight>();
+
+        public static void Initialise(float screenTileWidth, float screenTileHeight, World targetWorld)
         {
-            tileIdLightLevels[2] = new LightLevel(222, 143, 255);
+            tileIdLightLevels[2] = new LightLevel(/*222, 143, 255*/227, 191, 136);
             regionWidth = (int)(screenTileWidth + (2 * regionScreenPadding));
             regionHeight = (int)(screenTileHeight + (2 * regionScreenPadding));
             litRegionData = new LitRegionData(regionWidth, regionHeight);
             tempLightmap = new LightLevel[regionWidth, regionHeight];
             tempTileIds = new byte[regionWidth, regionHeight];
             falloffMap = new int[regionWidth, regionHeight];
+            worldWidth = targetWorld.mapWidth;
+            worldHeight = targetWorld.mapHeight;
+            litRegionData.targetWorld = targetWorld;
             PopulateTileIdFalloff();
         }
 
-        public static void PopulateTileIdFalloff()
+        private static void PopulateTileIdFalloff()
         {
             for (int i = 0; i < tileIdFalloffValues.Length; i++)
             {
@@ -52,7 +57,23 @@ namespace RaylibLightingJuly
             }
         }
 
-        public static void BeginThreadedLightingCalculation()
+        public static void SetLitRegionCenter(float x, float y)
+        {
+            lock (litRegionData)
+            {
+                litRegionData.centerX = x;
+                litRegionData.centerY = y;
+            }
+        }
+
+        public static void StartLightingThread()
+        {
+            Thread lightingThread = new Thread(new ThreadStart(BeginThreadedLightingCalculation));
+            lightingThread.IsBackground = true;
+            lightingThread.Start();
+        }
+
+        private static void BeginThreadedLightingCalculation()
         {
             Stopwatch timer = new Stopwatch();
 
@@ -76,9 +97,9 @@ namespace RaylibLightingJuly
             }
         }
 
-        public static void CalculateLighting(World world, LightLevel[,] target)
+        private static void CalculateLighting(World world, LightLevel[,] target)
         {
-            int startX, startY, endX, endY;
+            int startX, startY, endX, endY, i;
 
             //Calculate Region Position
             lock (litRegionData)
@@ -113,8 +134,18 @@ namespace RaylibLightingJuly
                 }
             }
 
+            //Add light from point lights
+            for (i = 0; i < pointLights.Count; i++)
+            {
+                PointLight p = pointLights[i];
+                int x = (int)p.worldPosX - startX;
+                int y = (int)p.worldPosY - startY;
+
+                ApplyPointLight(target, x, y, p.values);
+            }
+
             //Run lightmap propagations
-            int i = 0;
+            i = 0;
             bool changed = true;
             while (i < maxLightPropagations && changed == true)
             {
@@ -140,6 +171,25 @@ namespace RaylibLightingJuly
             }
         }
 
+        private static void ApplyPointLight(LightLevel[,] target, int x, int y, LightLevel levels)
+        {
+            if (!(x < 0 || y < 0 || x >= regionWidth || y >= regionHeight))
+            {
+                if (target[x, y].red < levels.red)
+                {
+                    target[x, y].red = levels.red;
+                }
+                if (target[x, y].green < levels.green)
+                {
+                    target[x, y].green = levels.green;
+                }
+                if (target[x, y].blue < levels.blue)
+                {
+                    target[x, y].blue = levels.blue;
+                }
+            }
+        }
+
         /// <returns>True if any change to the lightmap was made</returns>
         private static bool PropagateLight(LightLevel[,] target, int startX, int startY, int endX, int endY, bool reverseScanX, bool reverseScanY)
         {
@@ -150,6 +200,8 @@ namespace RaylibLightingJuly
 
             int ox = reverseScanX ? -1 : 1;
             int oy = reverseScanY ? -1 : 1;
+
+            const float sqrt2 = 1.41421356237f;
 
             for (int iy = 0; iy <= endY; iy++)
             {
@@ -162,8 +214,11 @@ namespace RaylibLightingJuly
                     if (target[x, y].CanPropagate(falloffMap[x, y]))
                     {
                         //only attempts to propagate in the scan directions of X and Y
-                        changed |= PropagateLightToNeighbour(target, x, y, x + ox, y);
-                        changed |= PropagateLightToNeighbour(target, x, y, x, y + oy);
+                        changed |= PropagateLightToNeighbour(target, x, y, x + ox, y, 1);
+                        changed |= PropagateLightToNeighbour(target, x, y, x, y + oy, 1);
+                        
+                        //optional diagonal propagation
+                        changed |= PropagateLightToNeighbour(target, x, y, x + ox, y + oy, sqrt2);
                     }
                 }
             }
@@ -171,12 +226,12 @@ namespace RaylibLightingJuly
         }
 
         /// <returns>True if any change to the lightmap was made</returns>
-        private static bool PropagateLightToNeighbour(LightLevel[,] target, int x, int y, int nx, int ny)
+        private static bool PropagateLightToNeighbour(LightLevel[,] target, int x, int y, int nx, int ny, float falloffModifier)
         {
             bool changed = false;
             if (!(ny < 0 || ny >= regionHeight || nx < 0 || nx >= regionWidth))// || x + startX >= worldWidth || y + startY >= worldHeight))
             {
-                int falloff = falloffMap[x, y];
+                int falloff = (int)(falloffMap[x, y] * falloffModifier);
                 int red = target[x, y].red - falloff;
                 int green = target[x, y].green - falloff;
                 int blue = target[x, y].blue - falloff;

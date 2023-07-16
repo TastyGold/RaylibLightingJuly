@@ -8,6 +8,9 @@
         public TilingLayer<byte> fgTiles;
         public TilingLayer<byte> bgTiles;
 
+        public TilingLayer<byte> fgTexIds;
+        public TilingLayer<byte> bgTexIds;
+
         public World(int width, int height)
         {
             mapWidth = width;
@@ -15,6 +18,9 @@
 
             fgTiles = new TilingLayer<byte>(mapWidth, mapHeight, byte.MinValue);
             bgTiles = new TilingLayer<byte>(mapWidth, mapHeight, byte.MinValue);
+
+            fgTexIds = new TilingLayer<byte>(mapWidth, mapHeight, byte.MinValue);
+            bgTexIds = new TilingLayer<byte>(mapWidth, mapHeight, byte.MinValue);
         }
     }
 }

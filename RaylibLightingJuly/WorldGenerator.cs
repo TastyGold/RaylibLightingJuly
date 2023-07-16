@@ -19,7 +19,7 @@ namespace RaylibLightingJuly
 
         public static void GeneratePerlinTiles(World world, float population)
         {
-            float[,] values = Noise.Calc2D(world.mapWidth, world.mapHeight, 0.075f);
+            float[,] values = Noise.Calc2D(world.mapWidth, world.mapHeight, 0.075f / 3);
 
             for (int y = 0; y < world.mapHeight; y++)
             {
