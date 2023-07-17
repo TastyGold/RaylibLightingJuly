@@ -19,6 +19,8 @@ namespace RaylibLightingJuly
         public static int screenWidth = 1600;
         public static int screenHeight = 900;
 
+        public static bool drawTiles = true;
+
         public static void Run()
         {
             Begin();
@@ -37,8 +39,9 @@ namespace RaylibLightingJuly
             Raylib.InitWindow(screenWidth, screenHeight, "RaylibLightingJuly");
 
             world = new World(1000, 1000);
-            WorldGenerator.GeneratePerlinTiles(world, 0.38f);
-            WorldGenerator.AddTorches(world, 1);
+            //WorldGenerator.GeneratePerlinTiles(world, 0.38f);
+            //WorldGenerator.AddTorches(world, 1);
+            WorldGenerator.GenerateSpiralTiles(world);
             WorldRenderer.Initialise();
 
             AutoTilingManager.LoadConversionTable();
@@ -67,6 +70,8 @@ namespace RaylibLightingJuly
             HandleTilePainting(mouseWorldPosition);
             HandleMousePointLight(mouseWorldPosition, deltaTime);
 
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_T)) drawTiles = !drawTiles;
+
             LightingManager.SetLitRegionCenter(mainCamera.Target.X, mainCamera.Target.Y);
         }
 
@@ -77,7 +82,8 @@ namespace RaylibLightingJuly
             Raylib.BeginMode2D(mainCamera.Cam);
             if (world is not null)
             {
-                WorldRenderer.DrawTilesLit(world);
+                if (drawTiles) WorldRenderer.DrawTilesLit(world);
+                else WorldRenderer.DrawTilesSimpleLit(world);
                 WorldRenderer.DrawWorldBorderLines(world);
             }
             Raylib.EndMode2D();
@@ -130,6 +136,7 @@ namespace RaylibLightingJuly
                     if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                     {
                         world!.fgTiles[mouseX, mouseY] = 2;
+                        changed = true;
                     }
                 }
                 else if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))

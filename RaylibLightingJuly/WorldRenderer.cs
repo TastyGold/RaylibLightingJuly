@@ -10,7 +10,7 @@ namespace RaylibLightingJuly
         public const string graphicsDirectory = "..\\..\\..\\Assets/Graphics/";
 
         public const int pixelScale = 4;
-        public const int tileResolution = 8;
+        public const int tileResolution = 12;
         public const int pixelsPerTile = pixelScale * tileResolution;
 
         public static Texture2D tempTileset;
@@ -44,7 +44,7 @@ namespace RaylibLightingJuly
             }
         }
 
-        public static void DrawTilesSimpleLit(World world, bool drawUnlitTiles)
+        public static void DrawTilesSimpleLit(World world, bool drawUnlitTiles = false)
         {
             lock (LightingManager.litRegionData)
             {
