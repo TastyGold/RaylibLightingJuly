@@ -12,25 +12,29 @@ namespace RaylibLightingJuly
 
         public static int worldWidth;
         public static int worldHeight;
-        
+
+        public const int minLightPropagations = 4;
         public const int maxLightPropagations = 12;
-        public const int lightFalloffAir = 8;
+        public const int lightFalloffAir = 10;
         public const int lightFalloffTile = 32;
 
         public static LitRegionData litRegionData = new LitRegionData(0, 0);
         private static LightLevel[,] tempLightmap = new LightLevel[0, 0];
         private static byte[,] tempTileIds = new byte[0, 0];
 
-        private static readonly LightLevel[] tileIdLightLevels = new LightLevel[256];
-        private static readonly int[] tileIdFalloffValues = new int[256];
+        private static LightLevel[] tileIdLightLevels = null!;
+        private static int[] tileIdFalloffValues = null!;
 
         private static int[,] falloffMap = new int[0, 0];
 
         public static List<PointLight> pointLights = new List<PointLight>();
+        public static LightLevel skylight = new LightLevel(255, 251, 213);
 
         public static void Initialise(float screenTileWidth, float screenTileHeight, World targetWorld)
         {
-            tileIdLightLevels[2] = new LightLevel(/*222, 143, 255*/227, 191, 136);
+            tileIdLightLevels = new LightLevel[TileDataManager.IDs.Length];
+            tileIdFalloffValues = new int[TileDataManager.IDs.Length];
+            tileIdLightLevels[4] = new LightLevel(/*222, 143, 255*/227, 191, 136);
             regionWidth = (int)(screenTileWidth + (2 * regionScreenPadding));
             regionHeight = (int)(screenTileHeight + (2 * regionScreenPadding));
             litRegionData = new LitRegionData(regionWidth, regionHeight);
@@ -47,13 +51,7 @@ namespace RaylibLightingJuly
         {
             for (int i = 0; i < tileIdFalloffValues.Length; i++)
             {
-                tileIdFalloffValues[i] = i switch
-                {
-                    0 => lightFalloffAir,
-                    1 => lightFalloffTile,
-                    2 => lightFalloffAir,
-                    _ => lightFalloffTile,
-                };
+                tileIdFalloffValues[i] = TileDataManager.IsTileSolid(i) ? lightFalloffTile : lightFalloffAir; 
             }
         }
 
@@ -130,6 +128,7 @@ namespace RaylibLightingJuly
                 {
                     byte tileId = tempTileIds[x, y];
                     target[x, y].Set(tileIdLightLevels[tileId]);
+                    if (world.fgTiles.IsTileEmpty(x + startX, y + startY) && world.bgTiles.IsTileEmpty(x + startX, y + startY)) target[x, y].Add(skylight);
                     falloffMap[x, y] = tileIdFalloffValues[tileId];
                 }
             }
@@ -147,7 +146,7 @@ namespace RaylibLightingJuly
             //Run lightmap propagations
             i = 0;
             bool changed = true;
-            while (i < maxLightPropagations && changed == true)
+            while (i < minLightPropagations || (i < maxLightPropagations && changed == true))
             {
                 changed = PropagateLight(target, startX, startY, endX, endY, i % 2 == 1, ((i + 1) & 2) == 2);
                 i++;

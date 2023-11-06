@@ -38,22 +38,24 @@ namespace RaylibLightingJuly
         {
             Raylib.InitWindow(screenWidth, screenHeight, "RaylibLightingJuly");
 
+            TileDataManager.Initialise();
+
             world = new World(1000, 1000);
             //WorldGenerator.GeneratePerlinTiles(world, 0.38f);
+            WorldGenerator.GenerateHeightmapTerrain(world, 0.5f);
             //WorldGenerator.AddTorches(world, 1);
-            WorldGenerator.GenerateSpiralTiles(world);
-            WorldRenderer.Initialise();
 
             AutoTilingManager.LoadConversionTable();
             AutoTilingManager.UpdateTileIndexes(world, 0, 0, world.mapWidth - 1, world.mapHeight - 1);
 
             mainCamera.Initialise(screenWidth, screenHeight, screenTileHeight, WorldRenderer.pixelsPerTile);
             mainCamera.Target = new Vector2(world.mapWidth / 2, world.mapHeight / 2);
-            //mainCamera.Zoom *= 0.03f;
-            //mainCamera.Zoom *= 3;
 
             LightingManager.Initialise(screenTileWidth, screenTileHeight, world);
             LightingManager.StartLightingThread();
+
+            WorldRenderer.Initialise();
+            WorldRenderer.SetRenderMode(RenderMode.Normal);
 
             LightingManager.pointLights.Add(mouseLight);
         }
@@ -67,10 +69,13 @@ namespace RaylibLightingJuly
             HandleCameraMovement(movementInput, deltaTime);
 
             Vector2 mouseWorldPosition = GetMouseWorldPosition();
+            HandleCameraZoom();
             HandleTilePainting(mouseWorldPosition);
-            HandleMousePointLight(mouseWorldPosition, deltaTime);
+            //HandleMousePointLight(mouseWorldPosition, deltaTime, false);
 
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_T)) drawTiles = !drawTiles;
+            if ((Raylib.IsKeyPressed(KeyboardKey.KEY_R) && !Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))) WorldRenderer.SetRenderMode(WorldRenderer.GetRenderMode() == RenderMode.Simple ? RenderMode.Normal : RenderMode.Simple);
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_L) || (Raylib.IsKeyPressed(KeyboardKey.KEY_R) && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))) WorldRenderer.ToggleLighting();
 
             LightingManager.SetLitRegionCenter(mainCamera.Target.X, mainCamera.Target.Y);
         }
@@ -82,9 +87,7 @@ namespace RaylibLightingJuly
             Raylib.BeginMode2D(mainCamera.Cam);
             if (world is not null)
             {
-                if (drawTiles) WorldRenderer.DrawTilesLit(world);
-                else WorldRenderer.DrawTilesSimpleLit(world);
-                WorldRenderer.DrawWorldBorderLines(world);
+                WorldRenderer.Draw(world);
             }
             Raylib.EndMode2D();
             DrawDebugOverlay();
@@ -113,7 +116,7 @@ namespace RaylibLightingJuly
         {
             if (movementInput != Vector2.Zero)
             {
-                float shiftBoost = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? /*3*/1 : 1;
+                float shiftBoost = Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT) ? 5 : 1;
                 mainCamera.Target += mainCameraSpeed * deltaTime * shiftBoost * movementInput;
             }
         }
@@ -135,7 +138,7 @@ namespace RaylibLightingJuly
                 {
                     if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                     {
-                        world!.fgTiles[mouseX, mouseY] = 2;
+                        world!.fgTiles[mouseX, mouseY] = 4;
                         changed = true;
                     }
                 }
@@ -157,7 +160,7 @@ namespace RaylibLightingJuly
             }
         }
 
-        public static void HandleMousePointLight(Vector2 mouseWorldPos, float deltaTime)
+        public static void HandleMousePointLight(Vector2 mouseWorldPos, float deltaTime, bool rainbow)
         {
             mouseLight.worldPosX = mouseWorldPos.X;
             mouseLight.worldPosY = mouseWorldPos.Y;
@@ -165,9 +168,17 @@ namespace RaylibLightingJuly
             mouseLightHue += deltaTime * mouseLightHueCycleRate;
             if (mouseLightHue > 360) mouseLightHue -= 360;
 
-            Color col = Raylib.ColorFromHSV(mouseLightHue, 1, 1);
+            Color col = rainbow ? Raylib.ColorFromHSV(mouseLightHue, 1, 1) : Color.WHITE;
 
             mouseLight.values.Set((byte)(col.r * 0.3f + 175f), (byte)(col.g * 0.3f + 175f), (byte)(col.b * 0.3f + 175f));
+        }
+
+        public static void HandleCameraZoom()
+        {
+            if (Raylib.GetMouseWheelMove() != 0)
+            {
+                mainCamera.Zoom *= Raylib.GetMouseWheelMove() > 0 ? 1.25f : 0.8f;
+            }
         }
 
         public static void DrawDebugOverlay()
@@ -176,6 +187,7 @@ namespace RaylibLightingJuly
             Raylib.DrawText($"AvgLightProp: {DebugManager.GetAverageLightmapPropagations()}", 10, 40, 20, Color.DARKGREEN);
             Raylib.DrawText($"LightingCalc (ms): {DebugManager.GetLightingCalculationTime()}", 10, 70, 20, Color.DARKGREEN);
             Raylib.DrawText($"AvgLightingCalc (ms): {DebugManager.GetAverageLightingCalculationTime()}", 10, 100, 20, Color.DARKGREEN);
+            Raylib.DrawText($"MousePosition: <{(int)GetMouseWorldPosition().X}, {(int)GetMouseWorldPosition().Y}>", 10, 130, 20, Color.DARKGREEN);
             DebugManager.DrawFrameTimeGraph(5000);
         }
     }

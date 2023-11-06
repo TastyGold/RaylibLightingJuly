@@ -1,6 +1,6 @@
 ﻿namespace RaylibLightingJuly
 {
-    public class LitRegionData
+    internal class LitRegionData
     {
         //For thread safety reasons, all region data is stored in one object that can be locked
 

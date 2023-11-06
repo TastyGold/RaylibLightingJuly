@@ -1,6 +1,6 @@
 ﻿namespace RaylibLightingJuly
 {
-    public class World
+    internal class World
     {
         public readonly int mapWidth;
         public readonly int mapHeight;

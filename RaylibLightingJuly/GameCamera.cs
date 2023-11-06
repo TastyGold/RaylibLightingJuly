@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace RaylibLightingJuly
 {
-    public class GameCamera
+    internal class GameCamera
     {
         private Camera2D _cam;
         public Camera2D Cam => _cam;

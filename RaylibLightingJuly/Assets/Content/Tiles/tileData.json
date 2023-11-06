@@ -1,0 +1,87 @@
+[
+  {
+    "id": 0,
+    "name": "air",
+    "mapColor": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "solid": false,
+    "transparent": true,
+    "connected": false,
+    "isDirt": false,
+    "blendDirt": false,
+    "atlasPath": null,
+    "atlasType": 0,
+    "numVariants": 0
+  },
+  {
+    "id": 1,
+    "name": "dirt",
+    "mapColor": {
+      "r": 187,
+      "g": 117,
+      "b": 71
+    },
+    "solid": true,
+    "transparent": false,
+    "connected": true,
+    "isDirt": true,
+    "blendDirt": false,
+    "atlasPath": "Tiles/dirt_fg.png",
+    "atlasType": 1,
+    "numVariants": 1
+  },
+  {
+    "id": 2,
+    "name": "grass",
+    "mapColor": {
+      "r": 20,
+      "g": 160,
+      "b": 46
+    },
+    "solid": true,
+    "transparent": false,
+    "connected": true,
+    "isDirt": true,
+    "blendDirt": false,
+    "atlasPath": "Tiles/grass_fg.png",
+    "atlasType": 1,
+    "numVariants": 4
+  },
+  {
+    "id": 3,
+    "name": "stone",
+    "mapColor": {
+      "r": 127,
+      "g": 132,
+      "b": 148
+    },
+    "solid": true,
+    "transparent": false,
+    "connected": true,
+    "isDirt": false,
+    "blendDirt": true,
+    "atlasPath": "Tiles/stone_fg.png",
+    "atlasType": 1,
+    "numVariants": 1
+  },
+  {
+    "id": 4,
+    "name": "torch",
+    "mapColor": {
+      "r": 245,
+      "g": 193,
+      "b": 110
+    },
+    "solid": false,
+    "transparent": true,
+    "connected": false,
+    "isDirt": false,
+    "blendDirt": false,
+    "atlasPath": null,
+    "atlasType": 0,
+    "numVariants": 0
+  }
+]

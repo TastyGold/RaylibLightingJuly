@@ -1,6 +1,6 @@
 ﻿namespace RaylibLightingJuly
 {
-    public class TilingLayer<T>
+    internal class TilingLayer<T>
     {
         public readonly int width;
         public readonly int height;

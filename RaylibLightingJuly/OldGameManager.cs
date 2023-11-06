@@ -89,7 +89,7 @@ namespace RaylibLightingJuly
             Raylib.BeginTextureMode(previewTexture);
             Raylib.BeginMode2D(mainCamera);
             Raylib.ClearBackground(Color.BLACK);
-            WorldRenderer.DrawTilesSimpleLit(world, false);
+            WorldRenderer.DrawTilesSimple(world, false);
             WorldRenderer.DrawWorldBorderLines(world);
             Raylib.EndMode2D();
             Raylib.EndTextureMode();

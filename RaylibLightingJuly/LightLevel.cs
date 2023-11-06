@@ -33,6 +33,11 @@
             blue = l.blue;
         }
 
+        public void Add(LightLevel l)
+        {
+            this = new LightLevel(l.red > red ? l.red : red, l.green > green ? l.green : green, l.blue > blue ? l.blue : blue);
+        }
+
         public LightLevel()
         {
             red = 0;

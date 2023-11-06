@@ -2,9 +2,9 @@
 
 namespace RaylibLightingJuly
 {
-    public static class AutoTilingManager
+    static class AutoTilingManager
     {
-        public const string dataTableFilePath = "..\\..\\..\\neighbourToIndexTable.txt";
+        public const string dataTableFilePath = FileManager.contentDirectory + "Tiles/neighbourToIndexTable.txt";
         private static readonly byte[] conversionTable = new byte[256];
 
         //bit order 0b01234567
@@ -31,7 +31,7 @@ namespace RaylibLightingJuly
                 }
                 else
                 {
-                    tilePresent = world.fgTiles[nx, ny] != world.fgTiles.emptyId && world.fgTiles[nx, ny] != 2;
+                    tilePresent = TileDataManager.IsTileSolid(world.fgTiles[nx, ny]);
                 }
 
                 if (tilePresent)

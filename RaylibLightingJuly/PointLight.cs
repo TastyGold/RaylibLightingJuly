@@ -1,6 +1,6 @@
 ﻿namespace RaylibLightingJuly
 {
-    public class PointLight
+    internal class PointLight
     {
         public float worldPosX;
         public float worldPosY;
