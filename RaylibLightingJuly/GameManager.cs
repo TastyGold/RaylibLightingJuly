@@ -20,6 +20,7 @@ namespace RaylibLightingJuly
         public static int screenHeight = 900;
 
         public static bool drawTiles = true;
+        public static int selectedTileId = 1;
 
         public static void Run()
         {
@@ -73,10 +74,15 @@ namespace RaylibLightingJuly
             HandleTilePainting(mouseWorldPosition);
             //HandleMousePointLight(mouseWorldPosition, deltaTime, false);
 
+            if (selectedTileId < 0) selectedTileId = TileDataManager.IDs.Length - 1;
+            if (selectedTileId >= TileDataManager.IDs.Length - 1) selectedTileId = 0;
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_T)) drawTiles = !drawTiles;
             if ((Raylib.IsKeyPressed(KeyboardKey.KEY_R) && !Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))) WorldRenderer.SetRenderMode(WorldRenderer.GetRenderMode() == RenderMode.Simple ? RenderMode.Normal : RenderMode.Simple);
             if (Raylib.IsKeyPressed(KeyboardKey.KEY_L) || (Raylib.IsKeyPressed(KeyboardKey.KEY_R) && Raylib.IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT))) WorldRenderer.ToggleLighting();
-
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_RIGHT)) selectedTileId++;
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_LEFT)) selectedTileId--;
+            if (Raylib.IsKeyPressed(KeyboardKey.KEY_B)) WorldRenderer.ToggleTileBlending();
+    
             LightingManager.SetLitRegionCenter(mainCamera.Target.X, mainCamera.Target.Y);
         }
 
@@ -144,7 +150,7 @@ namespace RaylibLightingJuly
                 }
                 else if (Raylib.IsMouseButtonDown(MouseButton.MOUSE_BUTTON_LEFT))
                 {
-                    world!.fgTiles[mouseX, mouseY] = 1;
+                    world!.fgTiles[mouseX, mouseY] = (byte)selectedTileId;
                     changed = true;
                 }
 
@@ -188,6 +194,7 @@ namespace RaylibLightingJuly
             Raylib.DrawText($"LightingCalc (ms): {DebugManager.GetLightingCalculationTime()}", 10, 70, 20, Color.DARKGREEN);
             Raylib.DrawText($"AvgLightingCalc (ms): {DebugManager.GetAverageLightingCalculationTime()}", 10, 100, 20, Color.DARKGREEN);
             Raylib.DrawText($"MousePosition: <{(int)GetMouseWorldPosition().X}, {(int)GetMouseWorldPosition().Y}>", 10, 130, 20, Color.DARKGREEN);
+            Raylib.DrawText($"PaintTileID: <{selectedTileId}>", 10, 160, 20, Color.DARKGREEN);
             DebugManager.DrawFrameTimeGraph(5000);
         }
     }

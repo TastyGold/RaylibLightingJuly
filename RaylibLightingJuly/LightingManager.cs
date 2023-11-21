@@ -128,7 +128,7 @@ namespace RaylibLightingJuly
                 {
                     byte tileId = tempTileIds[x, y];
                     target[x, y].Set(tileIdLightLevels[tileId]);
-                    if (world.fgTiles.IsTileEmpty(x + startX, y + startY) && world.bgTiles.IsTileEmpty(x + startX, y + startY)) target[x, y].Add(skylight);
+                    if (TileDataManager.IDs[world.fgTiles[x + startX, y + startY]].transparent && world.bgTiles.IsTileEmpty(x + startX, y + startY)) target[x, y].Add(skylight);
                     falloffMap[x, y] = tileIdFalloffValues[tileId];
                 }
             }

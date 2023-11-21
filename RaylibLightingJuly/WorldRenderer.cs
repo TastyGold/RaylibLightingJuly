@@ -20,7 +20,7 @@ namespace RaylibLightingJuly
         {
             LoadTileAtlases();
             dirtBlendMask = new byte[LightingManager.regionWidth, LightingManager.regionHeight];
-            dirtBlendingAtlas = Raylib.LoadTexture(FileManager.graphicsDirectory + "Tiles/blending_dirt.png");
+            dirtBlendingAtlas = Raylib.LoadTexture(FileManager.graphicsDirectory + "Tiles/blending_dirt2.png");
         }
 
         public static void LoadTileAtlases()
@@ -60,6 +60,10 @@ namespace RaylibLightingJuly
         public static void ToggleLighting()
         {
             settings.enableLighting = !settings.enableLighting;
+        }
+        public static void ToggleTileBlending()
+        {
+            settings.enableTileBlending = !settings.enableTileBlending;
         }
 
         public static void DrawTilesSimple(World world, bool drawUnlitTiles = false)
@@ -168,7 +172,7 @@ namespace RaylibLightingJuly
                             }
 
                             //Blending
-                            if (dirtBlendMask[x - startX, y - startY] != 0 && TileDataManager.IDs[world.fgTiles[x, y]].blendDirt)
+                            if (dirtBlendMask[x - startX, y - startY] != 0 && TileDataManager.IDs[world.fgTiles[x, y]].blendDirt && settings.enableTileBlending)
                             {
                                 Rectangle srec = new Rectangle((dirtBlendMask[x - startX, y - startY] & 0b11) * 12, (dirtBlendMask[x - startX, y - startY] >> 2) * 12, 12, 12);
                                 Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
