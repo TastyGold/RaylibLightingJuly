@@ -6,7 +6,7 @@ namespace RaylibLightingJuly
     {
         public const float lightingInterval = 0.05f;
 
-        private static readonly float regionScreenPadding = 32;
+        private static readonly float regionScreenPadding = 25;
         public static int regionWidth;
         public static int regionHeight;
 
@@ -34,7 +34,7 @@ namespace RaylibLightingJuly
         {
             tileIdLightLevels = new LightLevel[TileDataManager.IDs.Length];
             tileIdFalloffValues = new int[TileDataManager.IDs.Length];
-            tileIdLightLevels[4] = new LightLevel(/*222, 143, 255*/227, 191, 136);
+            tileIdLightLevels[4] = new LightLevel(/*(purple) 222, 143, 255*/227, 191, 136);
             regionWidth = (int)(screenTileWidth + (2 * regionScreenPadding));
             regionHeight = (int)(screenTileHeight + (2 * regionScreenPadding));
             litRegionData = new LitRegionData(regionWidth, regionHeight);
@@ -128,7 +128,7 @@ namespace RaylibLightingJuly
                 {
                     byte tileId = tempTileIds[x, y];
                     target[x, y].Set(tileIdLightLevels[tileId]);
-                    if (TileDataManager.IDs[world.fgTiles[x + startX, y + startY]].transparent && world.bgTiles.IsTileEmpty(x + startX, y + startY)) target[x, y].Add(skylight);
+                    if (TileDataManager.IDs[world.fgTiles[x + startX, y + startY]].transparent && world.bgTiles.IsTileEmpty(x + startX, y + startY)) target[x, y].BlendAdditive(skylight);
                     falloffMap[x, y] = tileIdFalloffValues[tileId];
                 }
             }

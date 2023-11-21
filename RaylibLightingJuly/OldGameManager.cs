@@ -44,6 +44,7 @@ namespace RaylibLightingJuly
             previewTexture = Raylib.LoadRenderTexture((int)(screenTileWidth * WorldRenderer.pixelsPerTile), (int)(screenTileHeight * WorldRenderer.pixelsPerTile));
             LightingManager.Initialise(screenTileWidth, screenTileHeight, world);
             LightingManager.StartLightingThread();
+            WorldRenderer.SetRenderMode(RenderMode.Simple);
         }
 
         public static void Update()
@@ -89,7 +90,7 @@ namespace RaylibLightingJuly
             Raylib.BeginTextureMode(previewTexture);
             Raylib.BeginMode2D(mainCamera);
             Raylib.ClearBackground(Color.BLACK);
-            WorldRenderer.DrawTilesSimple(world, false);
+            WorldRenderer.Draw(world);
             WorldRenderer.DrawWorldBorderLines(world);
             Raylib.EndMode2D();
             Raylib.EndTextureMode();

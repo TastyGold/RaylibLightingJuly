@@ -15,6 +15,7 @@ namespace RaylibLightingJuly
             public bool transparent;
             public bool connected;
             public bool isDirt;
+            public bool isGrass;
             public bool blendDirt;
 
             public string? atlasPath;
@@ -30,6 +31,7 @@ namespace RaylibLightingJuly
                 transparent = false;
                 connected = true;
                 isDirt = false;
+                isGrass = false;
                 blendDirt = false;
                 atlasPath = "Tiles/grass.png";
                 atlasType = TileAtlasType.TilesetFull16x3;

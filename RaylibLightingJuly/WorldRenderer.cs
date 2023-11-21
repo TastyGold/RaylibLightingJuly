@@ -13,16 +13,14 @@ namespace RaylibLightingJuly
 
         public static Texture2D[] tileAtlases = null!;
 
-        public static byte[,] dirtBlendMask = null!;
-        public static Texture2D dirtBlendingAtlas;
+        private static Color bgTileTint = new Color(96, 96, 96, 255);
 
+        //Initalisation
         public static void Initialise()
         {
             LoadTileAtlases();
-            dirtBlendMask = new byte[LightingManager.regionWidth, LightingManager.regionHeight];
-            dirtBlendingAtlas = Raylib.LoadTexture(FileManager.graphicsDirectory + "Tiles/blending_dirt2.png");
+            WorldBlendingRenderer.Initialise();
         }
-
         public static void LoadTileAtlases()
         {
             tileAtlases = new Texture2D[TileDataManager.IDs.Length];
@@ -35,7 +33,24 @@ namespace RaylibLightingJuly
                 }
             }
         }
-        
+
+        //Config
+        public static void SetRenderMode(RenderMode r)
+        {
+            settings.renderMode = r;
+        }
+        public static RenderMode GetRenderMode() => settings.renderMode;
+        public static void SetLightingMode(LightingMode l)
+        {
+            settings.lightingMode = l;
+        }
+        public static LightingMode GetLightingMode() => settings.lightingMode;
+        public static void ToggleTileBlending()
+        {
+            settings.enableTileBlending = !settings.enableTileBlending;
+        }
+
+        //Rendering
         public static void Draw(World world)
         {
             switch(settings.renderMode)
@@ -52,21 +67,7 @@ namespace RaylibLightingJuly
             }
         }
 
-        public static void SetRenderMode(RenderMode r)
-        {
-            settings.renderMode = r;
-        }
-        public static RenderMode GetRenderMode() => settings.renderMode;
-        public static void ToggleLighting()
-        {
-            settings.enableLighting = !settings.enableLighting;
-        }
-        public static void ToggleTileBlending()
-        {
-            settings.enableTileBlending = !settings.enableTileBlending;
-        }
-
-        public static void DrawTilesSimple(World world, bool drawUnlitTiles = false)
+        private static void DrawTilesSimple(World world, bool drawUnlitTiles = true)
         {
             lock (LightingManager.litRegionData)
             {
@@ -81,7 +82,7 @@ namespace RaylibLightingJuly
                     {
                         bool bg = !world.bgTiles.IsTileEmpty(x, y);
                         bool fg = !world.fgTiles.IsTileEmpty(x, y);
-                        bool applyLighting = settings.enableLighting && !(
+                        bool applyLighting = settings.LightingEnabled && !(
                             x < LightingManager.litRegionData.startX ||
                             y < LightingManager.litRegionData.startY ||
                             x >= LightingManager.litRegionData.startX + LightingManager.regionWidth ||
@@ -111,8 +112,7 @@ namespace RaylibLightingJuly
                 }
             }
         }
-
-        public static void DrawLitRegionTiles(World world)
+        private static void DrawLitRegionTiles(World world)
         {
             lock (LightingManager.litRegionData)
             {
@@ -121,68 +121,93 @@ namespace RaylibLightingJuly
                 int endX = Math.Clamp(LightingManager.litRegionData.startX + LightingManager.regionWidth, 0, world.mapWidth);
                 int endY = Math.Clamp(LightingManager.litRegionData.startY + LightingManager.regionHeight, 0, world.mapHeight);
 
-                Color bgTileColor = new Color(96, 96, 96, 255);
+                WorldBlendingRenderer.CalculateDirtBlendMask(world, startX, startY, endX, endY);
 
-                //Calculate blend masks
                 for (int y = startY + 1; y < endY - 1; y++)
                 {
                     for (int x = startX + 1; x < endX - 1; x++)
                     {
-                        int maskX = x - startX;
-                        int maskY = y - startY;
-                        if (TileDataManager.IDs[world.fgTiles[x, y]].isDirt)
-                        {
-                            dirtBlendMask[maskX, maskY - 1] |= 0b0001;
-                            dirtBlendMask[maskX - 1, maskY] |= 0b0010;
-                            dirtBlendMask[maskX + 1, maskY] |= 0b0100;
-                            dirtBlendMask[maskX, maskY + 1] |= 0b1000;
-                        }
-                    }
-                }
-
-                for (int y = startY; y < endY; y++)
-                {
-                    for (int x = startX; x < endX; x++)
-                    {
                         bool fg = !world.fgTiles.IsTileEmpty(x, y);
                         bool bg = !world.bgTiles.IsTileEmpty(x, y);
 
-                        //Background tiles
-                        if (!fg || ((world.fgTexIds[x, y] != 17 || TileDataManager.IDs[world.fgTiles[x, y]].transparent) && bg))
+                        //Draw background tile
+                        if (ShouldDrawBgTile(world, x, y, fg, bg))
                         {
-                            Rectangle srec = new Rectangle(12, 12, 12, 12);
-                            Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
-                            Texture2D atlas = tileAtlases[world.bgTiles[x, y]];
-                            Raylib.DrawTexturePro(atlas, srec, drec, Vector2.Zero, 0, settings.enableLighting ? Tint(bgTileColor, LightingManager.litRegionData.lightmap[x - startX, y - startY]) : bgTileColor);
+                            DrawTileBg(world, x, y, startX, startY, fg, bg);
                         }
 
-                        //Foreground Tiles
+                        //Draw foreground tile
                         if (fg)
                         {
-                            if (world.fgTiles[x, y] == (int)TileDataManager.TileId.Torch)
-                            {
-                                Raylib.DrawRectangle((int)((x + 0.25f) * pixelsPerTile), (int)((y + 0.25f) * pixelsPerTile), pixelsPerTile / 2, pixelsPerTile / 2, TileDataManager.GetMapColor(4));
-                            }
-                            else
-                            {
-                                Rectangle srec = new Rectangle(AutoTilingManager.GetTilesetTileX(world.fgTexIds[x, y]) * 12, AutoTilingManager.GetTilesetTileY(world.fgTexIds[x, y]) * 12, 12, 12);
-                                Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
-                                Texture2D atlas = tileAtlases[world.fgTiles[x, y]];
-                                Raylib.DrawTexturePro(atlas, srec, drec, Vector2.Zero, 0, settings.enableLighting ? GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x - startX, y - startY]) : Color.WHITE);
-                            }
+                            DrawTileFg(world, x, y, startX, startY);
 
                             //Blending
-                            if (dirtBlendMask[x - startX, y - startY] != 0 && TileDataManager.IDs[world.fgTiles[x, y]].blendDirt && settings.enableTileBlending)
-                            {
-                                Rectangle srec = new Rectangle((dirtBlendMask[x - startX, y - startY] & 0b11) * 12, (dirtBlendMask[x - startX, y - startY] >> 2) * 12, 12, 12);
-                                Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
-                                Raylib.DrawTexturePro(dirtBlendingAtlas, srec, drec, Vector2.Zero, 0, settings.enableLighting ? GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x - startX, y - startY]) : Color.WHITE);
-                            }
+                            WorldBlendingRenderer.DrawBlendingTile(world, x, y, startX, startY, pixelsPerTile, settings);
                         }
-                        dirtBlendMask[x - startX, y - startY] = 0;
+
+                        //Reset dirt blend mask
+                        WorldBlendingRenderer.dirtBlendMask[x - startX, y - startY] = 0;
                     }
                 }
 
+            }
+        }
+
+        private static bool ShouldDrawBgTile(World world, int x, int y, bool fg, bool bg)
+        {
+            return !fg || ((world.fgTexIds[x, y] != 255 || TileDataManager.IDs[world.fgTiles[x, y]].transparent) && bg);
+        }
+        private static void DrawTileBg(World world, int x, int y, int startX, int startY, bool fg, bool bg)
+        {
+            Rectangle srec = new Rectangle(12, 12, 12, 12).FixBleedingEdge();
+            Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
+            Texture2D atlas = tileAtlases[world.bgTiles[x, y]];
+            Raylib.DrawTexturePro(atlas, srec, drec, Vector2.Zero, 0, settings.LightingEnabled ? Tint(bgTileTint, LightingManager.litRegionData.lightmap[x - startX, y - startY]) : bgTileTint);
+        }
+        private static void DrawTileFg(World world, int x, int y, int startX, int startY)
+        {
+            if (world.fgTiles[x, y] == (int)TileDataManager.TileId.Torch)
+            {
+                Raylib.DrawRectangle((int)((x + 0.25f) * pixelsPerTile), (int)((y + 0.25f) * pixelsPerTile), pixelsPerTile / 2, pixelsPerTile / 2, TileDataManager.GetMapColor(4));
+            }
+            else
+            {
+                int variantId = AutoTilingManager.GetVariantIndex(world, x, y);
+                Color tint = varColors[variantId];
+                Rectangle srec = new Rectangle(AutoTilingManager.GetTilesetTileX(world.fgTexIds[x, y]) * 12, (variantId * 3 + AutoTilingManager.GetTilesetTileY(world.fgTexIds[x, y])) * 12, 12, 12).FixBleedingEdge();
+                Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
+                Texture2D atlas = tileAtlases[world.fgTiles[x, y]];
+                Color4 colors = GetVertexColors(x - startX, y - startY);
+                //Color col = settings.enableLighting ? GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x - startX, y - startY]) : tint;
+                RaylibExtensions.DrawTextureProInterpolated(atlas, srec, drec, Vector2.Zero, colors.c0, colors.c1, colors.c2, colors.c3);
+                
+            }
+        }
+        private static Color[] varColors = { Color.WHITE, Color.RED, Color.GREEN, Color.BLUE };
+        private static Color GetVertexColor(int x, int y)
+        {
+            return GetColorFromLightLevel(LightLevel.GetCornerAverage(
+                LightingManager.litRegionData.lightmap[x, y],
+                LightingManager.litRegionData.lightmap[x, y + 1],
+                LightingManager.litRegionData.lightmap[x + 1, y + 1],
+                LightingManager.litRegionData.lightmap[x + 1, y]
+                ));
+        }
+        public static Color4 GetVertexColors(int x, int y)
+        {
+            switch (settings.lightingMode)
+            {
+                case LightingMode.Unlit:
+                    return new Color4(Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE);
+                case LightingMode.Retro:
+                    Color col = GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x, y]);
+                    return new Color4(col, col, col, col);
+                case LightingMode.Smooth or _:
+                    Color c0 = GetVertexColor(x - 1, y - 1);
+                    Color c1 = GetVertexColor(x - 1, y);
+                    Color c2 = GetVertexColor(x, y);
+                    Color c3 = GetVertexColor(x, y - 1);
+                    return new Color4(c0, c1, c2, c3);
             }
         }
 
@@ -197,12 +222,38 @@ namespace RaylibLightingJuly
             Raylib.DrawLine(0, height, width + 1, height, borderColor);
             Raylib.DrawLine(width + 1, 0, width + 1, height, borderColor);
         }
+        public static void DrawLitRegionBoundary(World world)
+        {
+            int startX = LightingManager.litRegionData.startX * pixelsPerTile;
+            int startY = LightingManager.litRegionData.startY * pixelsPerTile;
+            int endX = (LightingManager.litRegionData.startX + LightingManager.regionWidth) * pixelsPerTile;
+            int endY = (LightingManager.litRegionData.startY + LightingManager.regionHeight) * pixelsPerTile;
+            Raylib.DrawLine(startX, startY, endX, startY, Color.DARKBLUE);
+            Raylib.DrawLine(startX, startY, startX, endY, Color.DARKBLUE);
+            Raylib.DrawLine(startX, endY, endX, endY, Color.DARKBLUE);
+            Raylib.DrawLine(endX, startY, endX, endY, Color.DARKBLUE);
+        }
+        public static void DrawTileTexIds(World world)
+        {
+            int startX = Math.Clamp(LightingManager.litRegionData.startX, 0, world.mapWidth);
+            int startY = Math.Clamp(LightingManager.litRegionData.startY, 0, world.mapHeight);
+            int endX = Math.Clamp(LightingManager.litRegionData.startX + LightingManager.regionWidth, 0, world.mapWidth);
+            int endY = Math.Clamp(LightingManager.litRegionData.startY + LightingManager.regionHeight, 0, world.mapHeight);
 
+            for (int y = startY; y < endY; y++)
+            {
+                for (int x = startX; x < endX; x++)
+                {
+                    Raylib.DrawText(world.fgTexIds[x, y].ToString(), pixelsPerTile * x + (pixelsPerTile / 2 - pixelsPerTile / 8), pixelsPerTile * y + (pixelsPerTile / 2 - pixelsPerTile / 8), pixelsPerTile / 4, Color.BLACK);
+                }
+            }
+        }
+
+        //Utility
         public static Color GetColorFromLightLevel(LightLevel tint)
         {
             return new Color(tint.red, tint.green, tint.blue, (byte)255);
         }
-
         public static Color Tint(Color col, LightLevel tint)
         {
             return new Color(
@@ -212,6 +263,7 @@ namespace RaylibLightingJuly
                 (byte)(255)
                 );
         }
+
     }
 
     public enum RenderMode
@@ -219,5 +271,12 @@ namespace RaylibLightingJuly
         SimpleUnlit,
         Simple,
         Normal,
+    }
+
+    public enum LightingMode
+    {
+        Unlit,
+        Retro,
+        Smooth,
     }
 }

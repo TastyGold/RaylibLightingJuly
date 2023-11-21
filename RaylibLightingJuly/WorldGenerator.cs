@@ -25,7 +25,7 @@ namespace RaylibLightingJuly
             {
                 for (int x = 0; x < world.mapWidth; x++)
                 {
-                    byte id = (byte)(values[x, y] > population * 128 ? (values[x, y] < population * 200 ? 1 : 2) : 3);
+                    byte id = (byte)(values[x, y] > population * 128 ? 2 : 3);
                     world.fgTiles[x, y] = values[x, y] > population * 256 ? (byte)0 : (byte)id;
                     world.bgTiles[x, y] = 3;
                 }

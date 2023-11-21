@@ -14,6 +14,12 @@ namespace RaylibLightingJuly
         private static int[] bitOffsetsX = { 0, -1, 1, 0, -1, 1, -1, 1 };
         private static int[] bitOffsetsY = { -1, 0, 0, 1, -1, -1, 1, 1 };
 
+        public static void Initialise()
+        {
+            LoadConversionTable();
+            PopulateRandomOffset();
+        }
+
         public static byte GetNeighbourMask(World world, int x, int y)
         {
             byte mask = 0;
@@ -60,11 +66,28 @@ namespace RaylibLightingJuly
 
         public static int GetTilesetTileX(int texId)
         {
-            return texId & 0xf;
+            return conversionTable[texId] & 0xf;
         }
         public static int GetTilesetTileY(int texId)
         {
-            return texId >> 4;
+            return conversionTable[texId] >> 4;
+        }
+
+        public static int GetVariantIndex(World world, int x, int y)
+        {
+            return randomOffset[x & 0xf, y & 0xf] % TileDataManager.IDs[world.fgTiles[x, y]].numVariants;
+        }
+        private static readonly int[,] randomOffset = new int[16, 16];
+        private static void PopulateRandomOffset()
+        {
+            Random rand = new Random(3);
+            for (int y = 0; y < randomOffset.GetLength(0); y++)
+            {
+                for (int x = 0; x < randomOffset.GetLength(1); x++)
+                {
+                    randomOffset[x, y] = rand.Next();
+                }
+            }
         }
 
         public static void UpdateTileIndexes(World world, int startX, int startY, int endX, int endY)
@@ -78,7 +101,7 @@ namespace RaylibLightingJuly
             {
                 for (int x = startX; x <= endX; x++)
                 {
-                    world.fgTexIds[x, y] = conversionTable[GetNeighbourMask(world, x, y)];
+                    world.fgTexIds[x, y] = GetNeighbourMask(world, x, y);
                 }
             }
         }

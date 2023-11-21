@@ -106,5 +106,13 @@ namespace RaylibLightingJuly
                 Raylib.DrawLine(i, (int)y, i, height, fpsColors[fpsColorIndex]);
             }
         }
+
+        //Render Time
+        private static int renderMilliseconds = 0;
+        public static void RecordRenderMilliseconds(int milliseconds)
+        {
+            renderMilliseconds = milliseconds;
+        }
+        public static int GetRenderMilliseconds() => renderMilliseconds;
     }
 }
