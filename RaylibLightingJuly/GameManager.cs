@@ -105,7 +105,7 @@ namespace RaylibLightingJuly
                 WorldRenderer.Draw(world);
                 WorldRenderer.DrawWorldBorderLines(world);
                 WorldRenderer.DrawLitRegionBoundary(world);
-                WorldRenderer.DrawTileTexIds(world);
+                //WorldRenderer.DrawTileTexIds(world);
                 DebugManager.RecordRenderMilliseconds((int)debugStopwatch.ElapsedMilliseconds);
                 debugStopwatch.Reset();
             }
