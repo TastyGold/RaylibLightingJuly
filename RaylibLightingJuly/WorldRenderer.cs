@@ -43,6 +43,7 @@ namespace RaylibLightingJuly
         public static void SetLightingMode(LightingMode l)
         {
             settings.lightingMode = l;
+            LightingManager.interpolateLightmap = l == LightingMode.Smooth;
         }
         public static LightingMode GetLightingMode() => settings.lightingMode;
         public static void ToggleTileBlending()
@@ -67,7 +68,7 @@ namespace RaylibLightingJuly
             }
         }
 
-        private static void DrawTilesSimple(World world, bool drawUnlitTiles = true)
+        private static void DrawTilesSimple(World world, bool drawUnlitTiles = false)
         {
             lock (LightingManager.litRegionData)
             {
@@ -173,7 +174,6 @@ namespace RaylibLightingJuly
             else
             {
                 int variantId = AutoTilingManager.GetVariantIndex(world, x, y);
-                Color tint = varColors[variantId];
                 Rectangle srec = new Rectangle(AutoTilingManager.GetTilesetTileX(world.fgTexIds[x, y]) * 12, (variantId * 3 + AutoTilingManager.GetTilesetTileY(world.fgTexIds[x, y])) * 12, 12, 12).FixBleedingEdge();
                 Rectangle drec = new Rectangle(x * pixelsPerTile, y * pixelsPerTile, pixelsPerTile, pixelsPerTile);
                 Texture2D atlas = tileAtlases[world.fgTiles[x, y]];
@@ -181,33 +181,6 @@ namespace RaylibLightingJuly
                 //Color col = settings.enableLighting ? GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x - startX, y - startY]) : tint;
                 RaylibExtensions.DrawTextureProInterpolated(atlas, srec, drec, Vector2.Zero, colors.c0, colors.c1, colors.c2, colors.c3);
                 
-            }
-        }
-        private static Color[] varColors = { Color.WHITE, Color.RED, Color.GREEN, Color.BLUE };
-        private static Color GetVertexColor(int x, int y)
-        {
-            return GetColorFromLightLevel(LightLevel.GetCornerAverage(
-                LightingManager.litRegionData.lightmap[x, y],
-                LightingManager.litRegionData.lightmap[x, y + 1],
-                LightingManager.litRegionData.lightmap[x + 1, y + 1],
-                LightingManager.litRegionData.lightmap[x + 1, y]
-                ));
-        }
-        public static Color4 GetVertexColors(int x, int y)
-        {
-            switch (settings.lightingMode)
-            {
-                case LightingMode.Unlit:
-                    return new Color4(Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE);
-                case LightingMode.Retro:
-                    Color col = GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x, y]);
-                    return new Color4(col, col, col, col);
-                case LightingMode.Smooth or _:
-                    Color c0 = GetVertexColor(x - 1, y - 1);
-                    Color c1 = GetVertexColor(x - 1, y);
-                    Color c2 = GetVertexColor(x, y);
-                    Color c3 = GetVertexColor(x, y - 1);
-                    return new Color4(c0, c1, c2, c3);
             }
         }
 
@@ -250,6 +223,22 @@ namespace RaylibLightingJuly
         }
 
         //Utility
+        public static Color4 GetVertexColors(int x, int y)
+        {
+            if (settings.lightingMode == LightingMode.Unlit)
+            {
+                return new Color4(Color.WHITE);
+            }
+            else if (LightingManager.litRegionData.interpolated)
+            {
+                Color c0 = GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x - 1, y - 1]);
+                Color c1 = GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x - 1, y]);
+                Color c2 = GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x, y]);
+                Color c3 = GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x, y - 1]);
+                return new Color4(c0, c1, c2, c3);
+            }
+            else return new Color4(GetColorFromLightLevel(LightingManager.litRegionData.lightmap[x, y]));
+        }
         public static Color GetColorFromLightLevel(LightLevel tint)
         {
             return new Color(tint.red, tint.green, tint.blue, (byte)255);

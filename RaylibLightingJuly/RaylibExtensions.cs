@@ -83,6 +83,13 @@ namespace RaylibLightingJuly
     {
         public Color c0, c1, c2, c3;
 
+        public Color4 (Color col)
+        {
+            c0 = col;
+            c1 = col;
+            c2 = col;
+            c3 = col;
+        }
         public Color4 (Color c0, Color c1, Color c2, Color c3)
         {
             this.c0 = c0;

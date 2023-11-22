@@ -44,9 +44,9 @@
 
         public static LightLevel GetCornerAverage(LightLevel l0, LightLevel l1, LightLevel l2, LightLevel l3)
         {
-            byte r = (byte)((l0.red + l1.red + l2.red + l3.red) >> 2);
-            byte g = (byte)((l0.green + l1.green + l2.green + l3.green) >> 2);
-            byte b = (byte)((l0.blue + l1.blue + l2.blue + l3.blue) >> 2);
+            int r = (l0.red + l1.red + l2.red + l3.red) >> 2;
+            int g = (l0.green + l1.green + l2.green + l3.green) >> 2;
+            int b = (l0.blue + l1.blue + l2.blue + l3.blue) >> 2;
 
             return new LightLevel(r, g, b);
         }

@@ -60,6 +60,7 @@ namespace RaylibLightingJuly
 
             WorldRenderer.Initialise();
             WorldRenderer.SetRenderMode(RenderMode.Normal);
+            WorldRenderer.SetLightingMode(LightingMode.Smooth);
 
             LightingManager.pointLights.Add(mouseLight);
         }
@@ -75,7 +76,7 @@ namespace RaylibLightingJuly
             Vector2 mouseWorldPosition = GetMouseWorldPosition();
             HandleCameraZoom();
             HandleTilePainting(mouseWorldPosition);
-            //HandleMousePointLight(mouseWorldPosition, deltaTime, false);
+            HandleMousePointLight(mouseWorldPosition, deltaTime, false);
 
             if (selectedTileId < 0) selectedTileId = TileDataManager.IDs.Length - 1;
             if (selectedTileId >= TileDataManager.IDs.Length - 1) selectedTileId = 0;
@@ -104,7 +105,7 @@ namespace RaylibLightingJuly
                 WorldRenderer.Draw(world);
                 WorldRenderer.DrawWorldBorderLines(world);
                 WorldRenderer.DrawLitRegionBoundary(world);
-                //WorldRenderer.DrawTileTexIds(world);
+                WorldRenderer.DrawTileTexIds(world);
                 DebugManager.RecordRenderMilliseconds((int)debugStopwatch.ElapsedMilliseconds);
                 debugStopwatch.Reset();
             }

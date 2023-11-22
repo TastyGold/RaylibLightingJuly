@@ -18,14 +18,16 @@ namespace RaylibLightingJuly
         public const int lightFalloffAir = 10;
         public const int lightFalloffTile = 32;
 
-        public static LitRegionData litRegionData = new LitRegionData(0, 0);
-        private static LightLevel[,] tempLightmap = new LightLevel[0, 0];
-        private static byte[,] tempTileIds = new byte[0, 0];
+        public static bool interpolateLightmap = false;
+
+        public static LitRegionData litRegionData = null!;
+        private static LightLevel[,] tempLightmap = null!;
+        private static byte[,] tempTileIds = null!;
 
         private static LightLevel[] tileIdLightLevels = null!;
         private static int[] tileIdFalloffValues = null!;
 
-        private static int[,] falloffMap = new int[0, 0];
+        private static int[,] falloffMap = null!;
 
         public static List<PointLight> pointLights = new List<PointLight>();
         public static LightLevel skylight = new LightLevel(255, 251, 213);
@@ -98,7 +100,8 @@ namespace RaylibLightingJuly
         private static void CalculateLighting(World world, LightLevel[,] target)
         {
             int startX, startY, endX, endY, i;
-
+            bool interpolate = interpolateLightmap;
+    
             //Calculate Region Position
             lock (litRegionData)
             {
@@ -154,6 +157,11 @@ namespace RaylibLightingJuly
 
             DebugManager.RecordLightmapPropagations(i);
 
+            if (interpolate)
+            {
+                InterpolateLightmap(target);
+            }
+
             //Upload calculated lightmap data to shared region data
             lock (litRegionData)
             {
@@ -167,6 +175,8 @@ namespace RaylibLightingJuly
                         litRegionData.lightmap[x, y] = target[x, y];
                     }
                 }
+
+                litRegionData.interpolated = interpolate;
             }
         }
 
@@ -185,6 +195,22 @@ namespace RaylibLightingJuly
                 if (target[x, y].blue < levels.blue)
                 {
                     target[x, y].blue = levels.blue;
+                }
+            }
+        }
+
+        private static void InterpolateLightmap(LightLevel[,] target)
+        {
+            for (int y = 0; y < regionHeight - 1; y++)
+            {
+                for (int x = 0; x < regionWidth - 1; x++)
+                {
+                    target[x, y] = LightLevel.GetCornerAverage(
+                        target[x, y],
+                        target[x, y + 1],
+                        target[x + 1, y + 1],
+                        target[x + 1, y]
+                        );
                 }
             }
         }

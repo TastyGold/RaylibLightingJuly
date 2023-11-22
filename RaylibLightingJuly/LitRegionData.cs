@@ -11,6 +11,8 @@
 
         public float centerX, centerY;
 
+        public bool interpolated;
+
         public LitRegionData(int width, int height)
         {
             lightmap = new LightLevel[width, height];
