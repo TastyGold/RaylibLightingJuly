@@ -154,9 +154,9 @@ namespace RaylibLightingJuly
                 changed = PropagateLight(target, startX, startY, endX, endY, i % 2 == 1, ((i + 1) & 2) == 2);
                 i++;
             }
-
             DebugManager.RecordLightmapPropagations(i);
 
+            //Interpolate lightmap if smoothing enabled
             if (interpolate)
             {
                 InterpolateLightmap(target);

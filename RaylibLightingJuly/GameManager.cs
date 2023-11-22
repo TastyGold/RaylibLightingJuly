@@ -47,7 +47,7 @@ namespace RaylibLightingJuly
             world = new World(1000, 1000);
             //WorldGenerator.GeneratePerlinTiles(world, 0.38f);
             WorldGenerator.GenerateHeightmapTerrain(world, 0.5f);
-            //WorldGenerator.AddTorches(world, 1);
+            //WorldGenerator.AddTorches(world, 1000);
 
             AutoTilingManager.Initialise();
             AutoTilingManager.UpdateTileIndexes(world, 0, 0, world.mapWidth - 1, world.mapHeight - 1);
@@ -76,7 +76,7 @@ namespace RaylibLightingJuly
             Vector2 mouseWorldPosition = GetMouseWorldPosition();
             HandleCameraZoom();
             HandleTilePainting(mouseWorldPosition);
-            HandleMousePointLight(mouseWorldPosition, deltaTime, false);
+            //HandleMousePointLight(mouseWorldPosition, deltaTime, false);
 
             if (selectedTileId < 0) selectedTileId = TileDataManager.IDs.Length - 1;
             if (selectedTileId >= TileDataManager.IDs.Length - 1) selectedTileId = 0;
