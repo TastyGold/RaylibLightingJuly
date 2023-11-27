@@ -42,6 +42,20 @@
             this = new LightLevel(l.red < red ? l.red : red, l.green < green ? l.green : green, l.blue < blue ? l.blue : blue);
         }
 
+        public static LightLevel Subtract(LightLevel l, int n)
+        {
+            return new LightLevel(l.red - n, l.green - n, l.blue - n);
+        }
+
+        public static LightLevel Multiply(LightLevel l, float v)
+        {
+            return new LightLevel(
+                (int)(l.red * v),
+                (int)(l.green * v),
+                (int)(l.blue * v)
+                );
+        }
+
         public static LightLevel GetCornerAverage(LightLevel l0, LightLevel l1, LightLevel l2, LightLevel l3)
         {
             int r = (l0.red + l1.red + l2.red + l3.red) >> 2;

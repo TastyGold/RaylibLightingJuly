@@ -140,8 +140,8 @@ namespace RaylibLightingJuly
             for (i = 0; i < pointLights.Count; i++)
             {
                 PointLight p = pointLights[i];
-                int x = (int)p.worldPosX - startX;
-                int y = (int)p.worldPosY - startY;
+                float x = p.worldPosX - startX;
+                float y = p.worldPosY - startY;
 
                 ApplyPointLight(target, x, y, p.values);
             }
@@ -180,22 +180,34 @@ namespace RaylibLightingJuly
             }
         }
 
-        private static void ApplyPointLight(LightLevel[,] target, int x, int y, LightLevel levels)
+        private static void ApplyPointLight(LightLevel[,] target, float x, float y, LightLevel levels)
         {
-            if (!(x < 0 || y < 0 || x >= regionWidth || y >= regionHeight))
+            const float blend = 0.75f;
+            const float factor = 1 / blend;
+
+            if (x >= 0 && y >= 0 && x < regionWidth - 1 && y < regionHeight - 1)
             {
-                if (target[x, y].red < levels.red)
-                {
-                    target[x, y].red = levels.red;
-                }
-                if (target[x, y].green < levels.green)
-                {
-                    target[x, y].green = levels.green;
-                }
-                if (target[x, y].blue < levels.blue)
-                {
-                    target[x, y].blue = levels.blue;
-                }
+                int tileX = (int)(x - 0.5f); //gets top left tile of 2x2 mouse region
+                int tileY = (int)(y - 0.5f);
+
+                float localX = x - tileX - 0.5f; //local values will always be between 0 and 1
+                float localY = y - tileY - 0.5f;
+
+                float fx0 = localX <= (1 - blend) ? 1 : (1 - localX) * factor; //oh god oh fuck
+                float fy0 = localY <= (1 - blend) ? 1 : (1 - localY) * factor;
+                float fx1 = localX > blend ? 1 : localX * factor;
+                float fy1 = localY > blend ? 1 : localY * factor;
+
+                int falloff = falloffMap[(int)x, (int)y];
+                int f0 = (int)(falloff * (2 - fx0 - fy0)); //math
+                int f1 = (int)(falloff * (2 - fx0 - fy1));
+                int f2 = (int)(falloff * (2 - fx1 - fy1));
+                int f3 = (int)(falloff * (2 - fx1 - fy0));
+
+                target[tileX, tileY] = LightLevel.Subtract(levels, f0);
+                target[tileX, tileY + 1] = LightLevel.Subtract(levels, f1);
+                target[tileX + 1, tileY + 1] = LightLevel.Subtract(levels, f2);
+                target[tileX + 1, tileY] = LightLevel.Subtract(levels, f3);
             }
         }
 

@@ -76,7 +76,7 @@ namespace RaylibLightingJuly
             Vector2 mouseWorldPosition = GetMouseWorldPosition();
             HandleCameraZoom();
             HandleTilePainting(mouseWorldPosition);
-            //HandleMousePointLight(mouseWorldPosition, deltaTime, false);
+            HandleMousePointLight(mouseWorldPosition, deltaTime, false);
 
             if (selectedTileId < 0) selectedTileId = TileDataManager.IDs.Length - 1;
             if (selectedTileId >= TileDataManager.IDs.Length - 1) selectedTileId = 0;
