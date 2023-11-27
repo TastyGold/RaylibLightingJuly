@@ -78,7 +78,7 @@ namespace RaylibLightingJuly
             Stopwatch timer = new Stopwatch();
 
             while (Thread.CurrentThread.IsAlive)
-            {
+            { 
                 timer.Restart();
                 if (litRegionData.targetWorld is not null)
                 {
@@ -266,7 +266,7 @@ namespace RaylibLightingJuly
         private static bool PropagateLightToNeighbour(LightLevel[,] target, int x, int y, int nx, int ny, float falloffModifier)
         {
             bool changed = false;
-            if (!(ny < 0 || ny >= regionHeight || nx < 0 || nx >= regionWidth))// || x + startX >= worldWidth || y + startY >= worldHeight))
+            if (ny >= 0 && ny < regionHeight && nx >= 0 && nx < regionWidth)// || x + startX >= worldWidth || y + startY >= worldHeight))
             {
                 int falloff = (int)(falloffMap[x, y] * falloffModifier);
                 int red = target[x, y].red - falloff;
