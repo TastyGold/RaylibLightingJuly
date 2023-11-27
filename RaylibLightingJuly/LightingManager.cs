@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace RaylibLightingJuly
 {
@@ -151,7 +151,7 @@ namespace RaylibLightingJuly
             bool changed = true;
             while (i < minLightPropagations || (i < maxLightPropagations && changed == true))
             {
-                changed = PropagateLight(target, startX, startY, endX, endY, i % 2 == 1, ((i + 1) & 2) == 2);
+                changed = PropagateLight(target, startX, startY, endX, endY, (i & 1) == 1, ((i + 1) & 2) == 2);
                 i++;
             }
             DebugManager.RecordLightmapPropagations(i);
