@@ -180,7 +180,7 @@ namespace RaylibLightingJuly
             }
         }
 
-        private static void ApplyPointLight(LightLevel[,] target, float x, float y, LightLevel levels)
+        public static void _ApplyPointLight(LightLevel[,] target, float x, float y, LightLevel levels)
         {
             const float blend = 0.75f;
             const float factor = 1 / blend;
@@ -204,10 +204,35 @@ namespace RaylibLightingJuly
                 int f2 = (int)(falloff * (2 - fx1 - fy1));
                 int f3 = (int)(falloff * (2 - fx1 - fy0));
 
-                target[tileX, tileY] = LightLevel.Subtract(levels, f0);
-                target[tileX, tileY + 1] = LightLevel.Subtract(levels, f1);
-                target[tileX + 1, tileY + 1] = LightLevel.Subtract(levels, f2);
-                target[tileX + 1, tileY] = LightLevel.Subtract(levels, f3);
+                target[tileX + 0, tileY + 0].BlendAdditive(LightLevel.Subtract(levels, f0));
+                target[tileX + 0, tileY + 1].BlendAdditive(LightLevel.Subtract(levels, f1));
+                target[tileX + 1, tileY + 1].BlendAdditive(LightLevel.Subtract(levels, f2));
+                target[tileX + 1, tileY + 0].BlendAdditive(LightLevel.Subtract(levels, f3));
+            }
+        }
+
+        public static void ApplyPointLight(LightLevel[,] target, float x, float y, LightLevel levels)
+        {
+            if (x >= 0 && y >= 0 && x < regionWidth - 1 && y < regionHeight - 1)
+            {
+                int tileX = (int)(x - 0.5f); //gets top left tile of 2x2 mouse region
+                int tileY = (int)(y - 0.5f);
+
+                float localX = x - tileX - 0.5f; //local values will always be between 0 and  1
+                float localY = y - tileY - 0.5f;
+
+                int maxFalloff = falloffMap[(int)x, (int)y];
+
+                for (int iy = 0; iy < 2; iy++)
+                {
+                    for (int ix = 0; ix < 2; ix++)
+                    {
+                        float dx = localX - ix;
+                        float dy = localY - iy;
+                        double falloffAmount = Math.Sqrt(dx * dx + dy * dy);
+                        target[tileX + ix, tileY + iy].BlendAdditive(LightLevel.Subtract(levels, (int)(maxFalloff * falloffAmount)));
+                    }
+                }
             }
         }
 
