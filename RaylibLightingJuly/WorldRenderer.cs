@@ -190,10 +190,7 @@ namespace RaylibLightingJuly
             int width = world.mapWidth * pixelsPerTile;
             int height = world.mapHeight * pixelsPerTile;
 
-            Raylib.DrawLine(-1, -1, width + 1, -1, borderColor);
-            Raylib.DrawLine(0, -1, 0, height + 1, borderColor);
-            Raylib.DrawLine(0, height, width + 1, height, borderColor);
-            Raylib.DrawLine(width + 1, 0, width + 1, height, borderColor);
+            RaylibExtensions.DrawRectangleLines(0, 0, width, height, 1, borderColor);
         }
         public static void DrawLitRegionBoundary(World world)
         {
@@ -201,10 +198,8 @@ namespace RaylibLightingJuly
             int startY = LightingManager.litRegionData.startY * pixelsPerTile;
             int endX = (LightingManager.litRegionData.startX + LightingManager.regionWidth) * pixelsPerTile;
             int endY = (LightingManager.litRegionData.startY + LightingManager.regionHeight) * pixelsPerTile;
-            Raylib.DrawLine(startX, startY, endX, startY, Color.DARKBLUE);
-            Raylib.DrawLine(startX, startY, startX, endY, Color.DARKBLUE);
-            Raylib.DrawLine(startX, endY, endX, endY, Color.DARKBLUE);
-            Raylib.DrawLine(endX, startY, endX, endY, Color.DARKBLUE);
+
+            RaylibExtensions.DrawRectangleLines(startX, startY, endX, endY, 0, Color.DARKBLUE);
         }
         public static void DrawTileTexIds(World world)
         {

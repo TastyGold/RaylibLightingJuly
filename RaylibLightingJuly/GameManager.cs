@@ -209,10 +209,7 @@ namespace RaylibLightingJuly
             int x = (int)(mainCamera.Target.X * WorldRenderer.pixelsPerTile);
             int y = (int)(mainCamera.Target.Y * WorldRenderer.pixelsPerTile);
 
-            Raylib.DrawLine(x - w, y - h, x + w, y - h, borderColor);
-            Raylib.DrawLine(x - w, y + h, x + w, y + h, borderColor);
-            Raylib.DrawLine(x - w, y - h, x - w, y + h, borderColor);
-            Raylib.DrawLine(x + w, y - h, x + w, y + h, borderColor);
+            RaylibExtensions.DrawRectangleLines(x - w, y - h, x + w, y + h, 0, borderColor);
         }
 
         public static void DrawDebugOverlay()

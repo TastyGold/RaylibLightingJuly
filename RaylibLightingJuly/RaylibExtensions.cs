@@ -72,6 +72,19 @@ namespace RaylibLightingJuly
             }
         }
 
+        public static void DrawRectangleLines(int startX, int startY, int endX, int endY, int padding, Color color)
+        {
+            startX -= padding;
+            startY -= padding;
+            endX += padding;
+            endY += padding;
+
+            Raylib.DrawLine(startX, startY, startX, endY, color);
+            Raylib.DrawLine(endX, startY, endX, endY, color);
+            Raylib.DrawLine(startX, startY, endX, startY, color);
+            Raylib.DrawLine(startX, endY, endX, endY, color);
+        }
+
         private const float trim = 0.0002f;
         public static Rectangle FixBleedingEdge(this Rectangle r)
         {
